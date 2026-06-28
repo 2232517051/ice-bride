@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>冰宫新娘 · 互动短剧 Demo</title>
+<style>
+  :root{ --ice:#7fd4ff; --gold:#ffcf6b; --bad:#e85a6b; --bg:#070f18; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#05080d;font-family:"Microsoft YaHei","PingFang SC",sans-serif;color:#eaf6ff;-webkit-tap-highlight-color:transparent}
+  #app{height:100%;display:flex;align-items:center;justify-content:center}
+  /* 9:16 竖屏框 */
+  #frame{position:relative;height:min(96vh,860px);aspect-ratio:9/16;background:#000;border-radius:18px;overflow:hidden;box-shadow:0 0 0 1px #1b3a52,0 18px 60px rgba(0,0,0,.6)}
+  video{width:100%;height:100%;object-fit:cover;background:#000;display:block}
+
+  /* 通用覆盖层 */
+  .layer{position:absolute;inset:0;display:none;flex-direction:column;justify-content:flex-end;
+         background:linear-gradient(180deg,rgba(5,12,20,0) 40%,rgba(4,10,18,.55) 65%,rgba(3,8,15,.92) 100%);
+         padding:22px 18px 26px;gap:10px}
+  .layer.show{display:flex}
+
+  .qbar{position:absolute;top:0;left:0;right:0;padding:16px 18px;
+        background:linear-gradient(180deg,rgba(3,8,15,.85),rgba(3,8,15,0));font-size:14px;color:#cfe9fb}
+  .qbar b{color:var(--gold)}
+
+  .choices{display:flex;flex-direction:column;gap:11px}
+  .btn{appearance:none;border:1px solid #2f5f80;background:rgba(16,40,62,.82);color:#eaf6ff;
+       font-size:15px;line-height:1.35;padding:13px 15px;border-radius:12px;text-align:left;cursor:pointer;
+       backdrop-filter:blur(2px);transition:transform .08s,border-color .15s,background .15s}
+  .btn:hover{border-color:var(--ice);background:rgba(22,52,80,.95)}
+  .btn:active{transform:scale(.985)}
+  .btn .k{color:var(--ice);font-weight:bold;margin-right:8px}
+
+  /* 开始 / 结束屏 */
+  .center{justify-content:center;align-items:center;text-align:center;
+          background:radial-gradient(120% 80% at 50% 30%,rgba(20,48,74,.6),rgba(3,8,15,.96))}
+  .center h1{margin:0 0 6px;font-size:26px;letter-spacing:1px}
+  .center p{margin:4px 0;color:#9fc3da;font-size:14px;max-width:88%}
+  .cta{margin-top:22px;border:1px solid var(--ice);background:rgba(127,212,255,.12);color:#eaf6ff;
+       font-size:16px;padding:13px 30px;border-radius:30px;cursor:pointer}
+  .cta:hover{background:rgba(127,212,255,.22)}
+
+  /* 坏结局卡 */
+  .bad{justify-content:center;background:linear-gradient(160deg,rgba(58,22,32,.96),rgba(8,12,20,.98))}
+  .bad .tag{align-self:center;color:var(--bad);font-size:13px;letter-spacing:3px;margin-bottom:6px}
+  .bad h2{align-self:center;margin:0 0 14px;font-size:24px;color:#ffd6dc;text-align:center}
+  .bad .beats{background:rgba(0,0,0,.32);border-left:3px solid var(--bad);border-radius:8px;padding:12px 14px;margin:0 0 12px}
+  .bad .beats div{font-size:13.5px;color:#f0d9dd;line-height:1.55;margin:3px 0}
+  .bad .dlg{font-size:14px;color:#ffe9b0;line-height:1.6;margin:2px 0}
+  .bad .dlg .sp{color:#ff9fb0;margin-right:6px}
+  .bad .note{align-self:center;color:#7d6b6e;font-size:11.5px;margin:10px 0 16px;text-align:center}
+  .bad .row{display:flex;gap:10px;justify-content:center}
+  .bad .row button{border:1px solid #6a3a44;background:rgba(58,22,32,.6);color:#ffd6dc;
+                   font-size:14px;padding:11px 18px;border-radius:24px;cursor:pointer}
+  .bad .row button.primary{border-color:var(--ice);color:#eaf6ff;background:rgba(127,212,255,.12)}
+  .bad .row button:hover{filter:brightness(1.2)}
+
+  /* 角标 */
+  #hud{position:absolute;top:12px;right:14px;font-size:11px;color:#5f86a0;background:rgba(3,8,15,.5);
+       padding:3px 9px;border-radius:10px;z-index:5}
+  .hint{align-self:center;color:#6f93aa;font-size:11.5px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="frame">
+    <video id="vid" playsinline preload="auto"></video>
+    <div id="hud">原片片段</div>
+
+    <!-- 顶部决策问题 -->
+    <div class="qbar" id="qbar" style="display:none"></div>
+
+    <!-- 开始屏 -->
+    <div class="layer center show" id="startLayer">
+      <h1>冰宫新娘</h1>
+      <p>互动短剧 Demo · 你是被卖进冰宫的少女</p>
+      <p style="color:#6f93aa;font-size:12.5px">正确路径播原片；选错的坏结局暂以文字代替（视频待生成）</p>
+      <button class="cta" id="startBtn">▶ 开始</button>
+    </div>
+
+    <!-- 选项屏 -->
+    <div class="layer" id="choiceLayer">
+      <div class="choices" id="choices"></div>
+      <div class="hint">选对续播原片 · 选错走坏结局</div>
+    </div>
+
+    <!-- 坏结局屏 -->
+    <div class="layer bad" id="badLayer">
+      <div class="tag">BAD END</div>
+      <h2 id="badTitle"></h2>
+      <div class="beats" id="badBeats"></div>
+      <div id="badDlg"></div>
+      <div class="note" id="badNote">（此处为待生成片段 · 现以文字代替）</div>
+      <div class="row">
+        <button class="primary" id="badRetry">↻ 重开本节点</button>
+        <button id="badRestart">⟲ 从头开始</button>
+      </div>
+    </div>
+
+    <!-- 结束屏 -->
+    <div class="layer center" id="endLayer">
+      <h1 style="font-size:22px">🌹 真结局</h1>
+      <p style="color:#8af2b6">「What have I just done?」</p>
+      <p>你接受了这份羁绊与代价 —— 留下来，救他。</p>
+      <button class="cta" id="endBtn">⟲ 再玩一次</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORY = {
+  segments: {
+    seg1: { src:"seg1_sold.mp4",   hud:"原片 0:00–0:13 卖身出发",         decision:"d1" },
+    seg2: { src:"seg2_palace.mp4",  hud:"原片 0:13–0:40 进冰宫",           decision:"d2" },
+    seg3: { src:"seg3_truth.mp4",   hud:"原片 0:40–1:19 苏醒·真相",        decision:"d3" },
+    seg4: { src:"seg4_ending.mp4",  hud:"原片 1:19–1:29 真结局",           decision:"end" }
+  },
+  decisions: {
+    d1: { t:"0:13", q:"卫兵来拖你走。你此刻怎么做？", replay:"seg1", options:[
+      { label:"低头，任卫兵把你带走", go:"seg2" },
+      { label:"扑过去抢回那袋金子",   bad:"end_blade" },
+      { label:"挣脱卫兵，冲进风雪逃跑", bad:"end_frozen_field" }
+    ]},
+    d2: { t:"0:40", q:"指尖悬在他胸口的蓝符文前。碰，还是不碰？", replay:"seg2", options:[
+      { label:"伸手，把指尖按上他胸口的蓝符文", go:"seg3" },
+      { label:"缩回手，转身朝冰门狂奔",         bad:"end_ice_wall" },
+      { label:"惊恐中抓扯、捶打冰封的他",       bad:"end_ice_dust" }
+    ]},
+    d3: { t:"1:19", q:"救他＝毁自己。你怎么回应他的「今夜回到我身边」？", replay:"seg3", options:[
+      { label:"「今夜……我回来。」",            go:"seg4" },
+      { label:"「我不要为你死！」转身逃出冰宫", bad:"end_wither" },
+      { label:"「我来打碎它！」击碎他胸口符文", bad:"end_swap" }
+    ]}
+  },
+  badEnds: {
+    end_blade:{ title:"💀 雪地里的一刀", replay:"seg1",
+      beats:["你甩开卫兵，扑向王后去抢金袋","王后只后退半步，抬两指朝卫兵一勾","卫兵拔刀，一道刀光横扫","你倒进雪里；王后攥着金袋，头也不回地走远"],
+      dlg:[["你","You can't sell me! Give it back!"],["王后","Useless to the end."]] },
+    end_frozen_field:{ title:"💀 风雪吞了她", replay:"seg1",
+      beats:["你扯脱卫兵，转身冲进空旷雪原","暴风雪骤起，你那点锈红身影越跑越小，陷进深雪","你一头栽进深雪，往前刨，爬不动","白茫茫一片——卫兵靴子走近，雪面留下被拖拽的两道沟痕"],
+      dlg:[["你","I'd rather die out here!"],["王后","Let her freeze, then."]] },
+    end_ice_wall:{ title:"💀 封进冰墙", replay:"seg2",
+      beats:["你拒绝触碰，转身朝高耸的冰门狂奔","冰门轰然合拢，封成一整块实心蓝冰","寒霜如藤蔓从地面爬上你的脚踝、裙摆、脖颈","最后封住你睁大的双眼，泪在睫毛上冻成冰珠"],
+      dlg:[["你","Let me out! Please — let me out!"],["你","No... no, no—"]] },
+    end_ice_dust:{ title:"💀 碎成冰尘", replay:"seg2",
+      beats:["你惊恐中捶打、抓扯冰封的他","裂纹从胸口蓝符文裂开，蛛网般爬满全身冰层","他刚睁一丝眼缝、吐出半个字","整个身体从内崩解成闪光冰尘——王座空了"],
+      dlg:[["你","Get away from me!"],["王子","...wait—"]] },
+    end_wither:{ title:"💀 三百年，一瞬追上", replay:"seg3",
+      beats:["你从冰座倒退着逃下湿亮的蓝冰台阶","台阶半途，一道惨白冷光打来，你脚步顿住","皮肤龟裂、棕发瞬间变灰白，飞速枯萎","俯拍：台阶上只剩一摊灰烬和皱成一团的锈红长裙"],
+      dlg:[["你","No— I won't die for you!"],["老臣（画外）","You touched him. It's already taking you."]] },
+    end_swap:{ title:"💀 互换的冰雕", replay:"seg3",
+      beats:["你抓起冰晶碎片，砸向他胸口的蓝符文","青蓝光炸开，包裹他半身的冰层崩裂剥落","王子起身，着完整深色王袍，平静走下台阶离开","镜头摇回王座：你已代替他冻成新冰雕，胸口亮起同款蓝符文"],
+      dlg:[["你","I'll break this—!"],["王子","You shouldn't have done that."]] }
+  }
+};
+
+const vid   = document.getElementById('vid');
+const hud   = document.getElementById('hud');
+const qbar  = document.getElementById('qbar');
+const layers = { start:'startLayer', choice:'choiceLayer', bad:'badLayer', end:'endLayer' };
+function hideAll(){ Object.values(layers).forEach(id=>document.getElementById(id).classList.remove('show')); }
+function show(name){ hideAll(); document.getElementById(layers[name]).classList.add('show'); }
+
+let current = null; // 当前 segment id
+
+function playSegment(segId){
+  const seg = STORY.segments[segId];
+  current = segId;
+  hideAll(); qbar.style.display='none';
+  hud.textContent = seg.hud;
+  vid.src = seg.src;
+  vid.currentTime = 0;
+  const p = vid.play();
+  if(p && p.catch) p.catch(()=>{ /* 被拦截则等用户点 */ });
+}
+
+vid.addEventListener('ended', ()=>{
+  const seg = STORY.segments[current];
+  if(!seg) return;
+  if(seg.decision === 'end'){ show('end'); return; }
+  showDecision(seg.decision);
+});
+
+function showDecision(dId){
+  const d = STORY.decisions[dId];
+  qbar.style.display='block';
+  qbar.innerHTML = `<b>▶ ${d.t}</b> · ${d.q}`;
+  const box = document.getElementById('choices');
+  box.innerHTML = '';
+  const keys = ['A','B','C'];
+  d.options.forEach((opt,i)=>{
+    const b = document.createElement('button');
+    b.className = 'btn';
+    b.innerHTML = `<span class="k">${keys[i]}</span>${opt.label}`;
+    b.onclick = ()=>{
+      if(opt.go) playSegment(opt.go);
+      else showBad(opt.bad);
+    };
+    box.appendChild(b);
+  });
+  show('choice');
+}
+
+function showBad(badId){
+  const e = STORY.badEnds[badId];
+  qbar.style.display='none';
+  document.getElementById('badTitle').textContent = e.title;
+  document.getElementById('badBeats').innerHTML = e.beats.map(t=>`<div>· ${t}</div>`).join('');
+  document.getElementById('badDlg').innerHTML = e.dlg.map(([sp,l])=>`<div class="dlg"><span class="sp">${sp}：</span>${l}</div>`).join('');
+  document.getElementById('badRetry').onclick   = ()=>playSegment(e.replay);
+  document.getElementById('badRestart').onclick = ()=>playSegment('seg1');
+  try{ vid.pause(); }catch(_){}
+  show('bad');
+}
+
+document.getElementById('startBtn').onclick = ()=>playSegment('seg1');
+document.getElementById('endBtn').onclick   = ()=>playSegment('seg1');
+</script>
+</body>
+</html>
