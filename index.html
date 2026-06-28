@@ -74,7 +74,7 @@
     <div class="layer center show" id="startLayer">
       <h1>冰宫新娘</h1>
       <p>互动短剧 Demo · 你是被卖进冰宫的少女</p>
-      <p style="color:#6f93aa;font-size:12.5px">正确路径播原片；选错走坏结局（4 条已生成视频，其余暂以文字代替）</p>
+      <p style="color:#6f93aa;font-size:12.5px">正确路径播原片；选错走坏结局（6 条坏结局全部已生成视频）</p>
       <button class="cta" id="startBtn">▶ 开始</button>
     </div>
 
@@ -133,10 +133,10 @@ const STORY = {
     ]}
   },
   badEnds: {
-    end_blade:{ title:"💀 雪地里的一刀", replay:"seg1",
+    end_blade:{ title:"💀 雪地里的一刀", replay:"seg1", video:"bad_blade.mp4",
       beats:["你甩开卫兵，扑向王后去抢金袋","王后只后退半步，抬两指朝卫兵一勾","卫兵拔刀，一道刀光横扫","你倒进雪里；王后攥着金袋，头也不回地走远"],
       dlg:[["你","You can't sell me! Give it back!"],["王后","Useless to the end."]] },
-    end_frozen_field:{ title:"💀 风雪吞了她", replay:"seg1",
+    end_frozen_field:{ title:"💀 风雪吞了她", replay:"seg1", video:"bad_frozen_field.mp4",
       beats:["你扯脱卫兵，转身冲进空旷雪原","暴风雪骤起，你那点锈红身影越跑越小，陷进深雪","你一头栽进深雪，往前刨，爬不动","白茫茫一片——卫兵靴子走近，雪面留下被拖拽的两道沟痕"],
       dlg:[["你","I'd rather die out here!"],["王后","Let her freeze, then."]] },
     end_ice_wall:{ title:"💀 封进冰墙", replay:"seg2", video:"bad_ice_wall.mp4",
