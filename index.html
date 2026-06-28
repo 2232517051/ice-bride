@@ -74,7 +74,7 @@
     <div class="layer center show" id="startLayer">
       <h1>冰宫新娘</h1>
       <p>互动短剧 Demo · 你是被卖进冰宫的少女</p>
-      <p style="color:#6f93aa;font-size:12.5px">正确路径播原片；选错的坏结局暂以文字代替（视频待生成）</p>
+      <p style="color:#6f93aa;font-size:12.5px">正确路径播原片；选错走坏结局（3 条已生成视频，其余暂以文字代替）</p>
       <button class="cta" id="startBtn">▶ 开始</button>
     </div>
 
@@ -139,16 +139,16 @@ const STORY = {
     end_frozen_field:{ title:"💀 风雪吞了她", replay:"seg1",
       beats:["你扯脱卫兵，转身冲进空旷雪原","暴风雪骤起，你那点锈红身影越跑越小，陷进深雪","你一头栽进深雪，往前刨，爬不动","白茫茫一片——卫兵靴子走近，雪面留下被拖拽的两道沟痕"],
       dlg:[["你","I'd rather die out here!"],["王后","Let her freeze, then."]] },
-    end_ice_wall:{ title:"💀 封进冰墙", replay:"seg2",
+    end_ice_wall:{ title:"💀 封进冰墙", replay:"seg2", video:"bad_ice_wall.mp4",
       beats:["你拒绝触碰，转身朝高耸的冰门狂奔","冰门轰然合拢，封成一整块实心蓝冰","寒霜如藤蔓从地面爬上你的脚踝、裙摆、脖颈","最后封住你睁大的双眼，泪在睫毛上冻成冰珠"],
       dlg:[["你","Let me out! Please — let me out!"],["你","No... no, no—"]] },
     end_ice_dust:{ title:"💀 碎成冰尘", replay:"seg2",
       beats:["你惊恐中捶打、抓扯冰封的他","裂纹从胸口蓝符文裂开，蛛网般爬满全身冰层","他刚睁一丝眼缝、吐出半个字","整个身体从内崩解成闪光冰尘——王座空了"],
       dlg:[["你","Get away from me!"],["王子","...wait—"]] },
-    end_wither:{ title:"💀 三百年，一瞬追上", replay:"seg3",
+    end_wither:{ title:"💀 三百年，一瞬追上", replay:"seg3", video:"bad_wither.mp4",
       beats:["你从冰座倒退着逃下湿亮的蓝冰台阶","台阶半途，一道惨白冷光打来，你脚步顿住","皮肤龟裂、棕发瞬间变灰白，飞速枯萎","俯拍：台阶上只剩一摊灰烬和皱成一团的锈红长裙"],
       dlg:[["你","No— I won't die for you!"],["老臣（画外）","You touched him. It's already taking you."]] },
-    end_swap:{ title:"💀 互换的冰雕", replay:"seg3",
+    end_swap:{ title:"💀 互换的冰雕", replay:"seg3", video:"bad_swap.mp4",
       beats:["你抓起冰晶碎片，砸向他胸口的蓝符文","青蓝光炸开，包裹他半身的冰层崩裂剥落","王子起身，着完整深色王袍，平静走下台阶离开","镜头摇回王座：你已代替他冻成新冰雕，胸口亮起同款蓝符文"],
       dlg:[["你","I'll break this—!"],["王子","You shouldn't have done that."]] }
   }
@@ -161,10 +161,13 @@ const layers = { start:'startLayer', choice:'choiceLayer', bad:'badLayer', end:'
 function hideAll(){ Object.values(layers).forEach(id=>document.getElementById(id).classList.remove('show')); }
 function show(name){ hideAll(); document.getElementById(layers[name]).classList.add('show'); }
 
-let current = null; // 当前 segment id
+let current = null;     // 当前 segment id
+let mode = 'segment';   // 'segment' | 'badvideo'
+let currentBad = null;  // 当前坏结局 id
 
 function playSegment(segId){
   const seg = STORY.segments[segId];
+  mode = 'segment';
   current = segId;
   hideAll(); qbar.style.display='none';
   hud.textContent = seg.hud;
@@ -174,7 +177,20 @@ function playSegment(segId){
   if(p && p.catch) p.catch(()=>{ /* 被拦截则等用户点 */ });
 }
 
+function playBadVideo(badId){
+  const e = STORY.badEnds[badId];
+  mode = 'badvideo';
+  currentBad = badId;
+  hideAll(); qbar.style.display='none';
+  hud.textContent = '坏结局 · BAD END';
+  vid.src = e.video;
+  vid.currentTime = 0;
+  const p = vid.play();
+  if(p && p.catch) p.catch(()=>{});
+}
+
 vid.addEventListener('ended', ()=>{
+  if(mode === 'badvideo'){ showBadCard(currentBad); return; }
   const seg = STORY.segments[current];
   if(!seg) return;
   if(seg.decision === 'end'){ show('end'); return; }
@@ -203,8 +219,19 @@ function showDecision(dId){
 
 function showBad(badId){
   const e = STORY.badEnds[badId];
+  if(e.video){ playBadVideo(badId); return; }  // 有片段 → 先播坏结局视频，播完再弹卡
+  showBadCard(badId);
+}
+
+function showBadCard(badId){
+  const e = STORY.badEnds[badId];
+  const hasVideo = !!e.video;
   qbar.style.display='none';
   document.getElementById('badTitle').textContent = e.title;
+  // 有视频时，剧情已由画面交代，卡片只保留标题+重试；纯文字坏结局才展开 beats/dlg/note
+  document.getElementById('badBeats').style.display = hasVideo ? 'none' : '';
+  document.getElementById('badDlg').style.display   = hasVideo ? 'none' : '';
+  document.getElementById('badNote').style.display  = hasVideo ? 'none' : '';
   document.getElementById('badBeats').innerHTML = e.beats.map(t=>`<div>· ${t}</div>`).join('');
   document.getElementById('badDlg').innerHTML = e.dlg.map(([sp,l])=>`<div class="dlg"><span class="sp">${sp}：</span>${l}</div>`).join('');
   document.getElementById('badRetry').onclick   = ()=>playSegment(e.replay);
