@@ -111,8 +111,10 @@ const STORY = {
   segments: {
     seg1: { src:"seg1_sold.mp4",   hud:"原片 0:00–0:13 卖身出发",         decision:"d1" },
     seg2: { src:"seg2_palace.mp4",  hud:"原片 0:13–0:40 进冰宫",           decision:"d2" },
-    seg3: { src:"seg3_truth.mp4",   hud:"原片 0:40–1:19 苏醒·真相",        decision:"d3" },
-    seg4: { src:"seg4_ending.mp4",  hud:"原片 1:19–1:29 真结局",           decision:"end" }
+    // seg3_full = 原 seg3+seg4 重编码合成的单文件（0:40–1:29），D3 在 42.7s 段内定格出选项，
+    // Accept 后原地续播到片尾真结局 —— 全程不换 src，杜绝换源黑屏帧
+    // （seg3_truth.mp4 / seg4_ending.mp4 保留在仓库，Reel Craft 端还引用，勿删）
+    seg3: { src:"seg3_full.mp4",   hud:"原片 0:40–1:29 苏醒·真相",        decision:"d3" }
   },
   decisions: {
     d1: { t:"0:13", q:"The guards are dragging you away. What do you do?", replay:"seg1", options:[
@@ -124,11 +126,10 @@ const STORY = {
       { label:"Don't touch", bad:"end_ice_wall" }
     ]},
     d3: { t:"1:23", q:"Saving him will unmake you. \"Come back to me tonight.\"", replay:"seg3",
-      // 决策延后：seg3 播完先无缝续播 seg4 的前 4.2 秒，定格在她回头望向王座（王座+王子入画）的画面再出选项
-      // 逐帧校准：4.0s 王座还没入画，4.2s 起王座清晰可见，4.2–4.9s 都是回望王座的过肩构图，5.0s 她出画
-      // 想微调定格时刻，改 secs 即可（单位：秒，支持小数）
-      delay:{ seg:"seg4", secs:4.2, hud:"原片 1:19–1:23 回望王座" }, options:[
-      { label:"Accept", go:"seg4" },
+      // 段内定格：播到 42.7s（她回头望向王座、王座+王子入画）暂停出选项
+      // 逐帧校准：42.5s 王座未入画，42.7s 起王座清晰，43.4s 后她渐出画；微调改 pauseAt 即可（秒，支持小数）
+      pauseAt: 42.7, options:[
+      { label:"Accept", go:"seg3" },   // go === current → 从定格处原地续播，不重载
       { label:"Refuse", bad:"end_wither" }
     ]}
   },
@@ -164,7 +165,7 @@ function show(name){ hideAll(); document.getElementById(layers[name]).classList.
 let current = null;     // 当前 segment id
 let mode = 'segment';   // 'segment' | 'badvideo'
 let currentBad = null;  // 当前坏结局 id
-let pendingDecision = null; // 延后决策：{ dId, seg, at } —— 播到 seg 的第 at 秒时暂停并出选项
+let pendingDecision = null; // 段内定格决策：{ dId, seg, at } —— 播到 seg 的第 at 秒时暂停并出选项
 
 function playSegment(segId){
   const seg = STORY.segments[segId];
@@ -175,11 +176,14 @@ function playSegment(segId){
   hud.textContent = seg.hud;
   vid.src = seg.src;
   vid.currentTime = 0;
+  // 段内定格决策：同一文件内播到 pauseAt 秒暂停出选项，不换源
+  const d = STORY.decisions[seg.decision];
+  if(d && d.pauseAt != null){
+    pendingDecision = { dId: seg.decision, seg: segId, at: d.pauseAt };
+    requestAnimationFrame(watchPause);
+  }
   const p = vid.play();
   if(p && p.catch) p.catch(()=>{ /* 被拦截则等用户点 */ });
-  // 本段结尾若是"延后决策"，提前预热下一段视频，衔接时不黑屏
-  const d = STORY.decisions[seg.decision];
-  if(d && d.delay) fetch(STORY.segments[d.delay.seg].src).catch(()=>{});
 }
 
 function playBadVideo(badId){
@@ -199,29 +203,20 @@ vid.addEventListener('ended', ()=>{
   if(mode === 'badvideo'){ showBadCard(currentBad); return; }
   const seg = STORY.segments[current];
   if(!seg) return;
-  if(seg.decision === 'end'){ show('end'); return; }
+  if(pendingDecision && pendingDecision.seg === current){
+    // 兜底：暂停点没赶上（如后台标签 rAF 停转），定格在末帧出选项
+    const dId = pendingDecision.dId;
+    pendingDecision = null;
+    showDecision(dId);
+    return;
+  }
   const d = STORY.decisions[seg.decision];
-  if(d.delay){ startDelayedDecision(seg.decision, d.delay); return; }
+  if(!d || d.pauseAt != null){ show('end'); return; } // 定格决策已在段中处理过 → 片尾即真结局
   showDecision(seg.decision);
 });
 
-// 延后决策：上一段播完后，无缝续播下一段的前 at 秒，定格画面后再出选项
-function startDelayedDecision(dId, delay){
-  const seg = STORY.segments[delay.seg];
-  mode = 'segment';
-  current = delay.seg;
-  hideAll(); qbar.style.display='none';
-  hud.textContent = delay.hud || seg.hud;
-  vid.src = seg.src;
-  vid.currentTime = 0;
-  pendingDecision = { dId, seg: delay.seg, at: delay.secs };
-  const p = vid.play();
-  if(p && p.catch) p.catch(()=>{});
-  requestAnimationFrame(watchDelay);
-}
-
 // 用 rAF 逐帧盯播放进度（比 timeupdate 精确），到点即定格出选项
-function watchDelay(){
+function watchPause(){
   if(!pendingDecision) return;
   if(current === pendingDecision.seg && vid.currentTime >= pendingDecision.at){
     const dId = pendingDecision.dId;
@@ -230,7 +225,7 @@ function watchDelay(){
     showDecision(dId);
     return;
   }
-  requestAnimationFrame(watchDelay);
+  requestAnimationFrame(watchPause);
 }
 
 function showDecision(dId){
