@@ -111,7 +111,7 @@ const STORY = {
   segments: {
     seg1: { src:"seg1_sold.mp4",   hud:"原片 0:00–0:13 卖身出发",         decision:"d1" },
     seg2: { src:"seg2_palace.mp4",  hud:"原片 0:13–0:40 进冰宫",           decision:"d2" },
-    // seg3_full = 原 seg3+seg4 重编码合成的单文件（0:40–1:29），D3 在 42.7s 段内定格出选项，
+    // seg3_full = 原 seg3+seg4 重编码合成的单文件（0:40–1:29），D3 在 43.1s 段内定格出选项，
     // Accept 后原地续播到片尾真结局 —— 全程不换 src，杜绝换源黑屏帧
     // （seg3_truth.mp4 / seg4_ending.mp4 保留在仓库，Reel Craft 端还引用，勿删）
     seg3: { src:"seg3_full.mp4",   hud:"原片 0:40–1:29 苏醒·真相",        decision:"d3" }
@@ -125,10 +125,11 @@ const STORY = {
       { label:"Touch it",    go:"seg3" },
       { label:"Don't touch", bad:"end_ice_wall" }
     ]},
-    d3: { t:"1:23", q:"Saving him will unmake you. \"Come back to me tonight.\"", replay:"seg3",
-      // 段内定格：播到 42.7s（她回头望向王座、王座+王子入画）暂停出选项
-      // 逐帧校准：42.5s 王座未入画，42.7s 起王座清晰，43.4s 后她渐出画；微调改 pauseAt 即可（秒，支持小数）
-      pauseAt: 42.7, options:[
+    d3: { t:"1:24", q:"Saving him will unmake you. \"Come back to me tonight.\"", replay:"seg3",
+      // 段内定格：播到 43.1s（她回头望向王座，王座+王子清晰在画左、她后脑勺在画右）暂停出选项
+      // 帧号级校准（select by n，勿用 -ss+fps 抽帧标时间码，有相位偏移）：
+      // 42.7s 还只是后脑勺特写；王座 42.93s 起清晰，安全区 42.93–43.3，43.4s 后她渐出画
+      pauseAt: 43.1, options:[
       { label:"Accept", go:"seg3" },   // go === current → 从定格处原地续播，不重载
       { label:"Refuse", bad:"end_wither" }
     ]}
