@@ -81,7 +81,7 @@
     <!-- 选项屏 -->
     <div class="layer" id="choiceLayer">
       <div class="choices" id="choices"></div>
-      <div class="hint">选对续播原片 · 选错走坏结局</div>
+      <div class="hint">Choose wisely — one path ends badly</div>
     </div>
 
     <!-- 坏结局屏 -->
@@ -116,15 +116,15 @@ const STORY = {
     seg4: { src:"seg4_ending.mp4",  hud:"原片 1:19–1:29 真结局",           decision:"end" }
   },
   decisions: {
-    d1: { t:"0:13", q:"卫兵来拖你走。你此刻怎么做？", replay:"seg1", options:[
+    d1: { t:"0:13", q:"The guards are dragging you away. What do you do?", replay:"seg1", options:[
       { label:"Obey", go:"seg2" },
       { label:"Run",  bad:"end_frozen_field" }
     ]},
-    d2: { t:"0:40", q:"指尖悬在他胸口的蓝符文前。碰，还是不碰？", replay:"seg2", options:[
+    d2: { t:"0:40", q:"Your fingertips hover over the blue rune on his chest.", replay:"seg2", options:[
       { label:"Touch it",    go:"seg3" },
       { label:"Don't touch", bad:"end_ice_wall" }
     ]},
-    d3: { t:"1:19", q:"救他＝毁自己。你怎么回应他的「今夜回到我身边」？", replay:"seg3", options:[
+    d3: { t:"1:19", q:"Saving him will unmake you. \"Come back to me tonight.\"", replay:"seg3", options:[
       { label:"Accept", go:"seg4" },
       { label:"Refuse", bad:"end_wither" }
     ]}
