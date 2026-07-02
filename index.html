@@ -81,7 +81,6 @@
     <!-- 选项屏 -->
     <div class="layer" id="choiceLayer">
       <div class="choices" id="choices"></div>
-      <div class="hint">Choose wisely — one path ends badly</div>
     </div>
 
     <!-- 坏结局屏 -->
@@ -196,8 +195,6 @@ vid.addEventListener('ended', ()=>{
 
 function showDecision(dId){
   const d = STORY.decisions[dId];
-  qbar.style.display='block';
-  qbar.innerHTML = `<b>▶ ${d.t}</b> · ${d.q}`;
   const box = document.getElementById('choices');
   box.innerHTML = '';
   d.options.forEach((opt)=>{
