@@ -25,7 +25,7 @@
 
   .choices{display:flex;flex-direction:column;gap:12px;align-items:center}
   .btn{appearance:none;border:1px solid #2f5f80;background:rgba(16,40,62,.82);color:#eaf6ff;
-       font-size:16px;letter-spacing:3px;line-height:1;padding:14px 0;width:64%;border-radius:28px;
+       font-size:16px;letter-spacing:.5px;line-height:1;padding:14px 0;width:64%;border-radius:28px;
        text-align:center;cursor:pointer;
        backdrop-filter:blur(2px);transition:transform .08s,border-color .15s,background .15s}
   .btn:hover{border-color:var(--ice);background:rgba(22,52,80,.95)}
@@ -117,16 +117,16 @@ const STORY = {
   },
   decisions: {
     d1: { t:"0:13", q:"卫兵来拖你走。你此刻怎么做？", replay:"seg1", options:[
-      { label:"顺从", go:"seg2" },
-      { label:"逃跑", bad:"end_frozen_field" }
+      { label:"Obey", go:"seg2" },
+      { label:"Run",  bad:"end_frozen_field" }
     ]},
     d2: { t:"0:40", q:"指尖悬在他胸口的蓝符文前。碰，还是不碰？", replay:"seg2", options:[
-      { label:"碰",   go:"seg3" },
-      { label:"不碰", bad:"end_ice_wall" }
+      { label:"Touch it",    go:"seg3" },
+      { label:"Don't touch", bad:"end_ice_wall" }
     ]},
     d3: { t:"1:19", q:"救他＝毁自己。你怎么回应他的「今夜回到我身边」？", replay:"seg3", options:[
-      { label:"答应", go:"seg4" },
-      { label:"拒绝", bad:"end_wither" }
+      { label:"Accept", go:"seg4" },
+      { label:"Refuse", bad:"end_wither" }
     ]}
   },
   badEnds: {
