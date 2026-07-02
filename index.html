@@ -23,13 +23,13 @@
         background:linear-gradient(180deg,rgba(3,8,15,.85),rgba(3,8,15,0));font-size:14px;color:#cfe9fb}
   .qbar b{color:var(--gold)}
 
-  .choices{display:flex;flex-direction:column;gap:11px}
+  .choices{display:flex;flex-direction:column;gap:12px;align-items:center}
   .btn{appearance:none;border:1px solid #2f5f80;background:rgba(16,40,62,.82);color:#eaf6ff;
-       font-size:15px;line-height:1.35;padding:13px 15px;border-radius:12px;text-align:left;cursor:pointer;
+       font-size:16px;letter-spacing:3px;line-height:1;padding:14px 0;width:64%;border-radius:28px;
+       text-align:center;cursor:pointer;
        backdrop-filter:blur(2px);transition:transform .08s,border-color .15s,background .15s}
   .btn:hover{border-color:var(--ice);background:rgba(22,52,80,.95)}
   .btn:active{transform:scale(.985)}
-  .btn .k{color:var(--ice);font-weight:bold;margin-right:8px}
 
   /* 开始 / 结束屏 */
   .center{justify-content:center;align-items:center;text-align:center;
@@ -74,7 +74,7 @@
     <div class="layer center show" id="startLayer">
       <h1>冰宫新娘</h1>
       <p>互动短剧 Demo · 你是被卖进冰宫的少女</p>
-      <p style="color:#6f93aa;font-size:12.5px">正确路径播原片；选错走坏结局（6 条坏结局全部已生成视频）</p>
+      <p style="color:#6f93aa;font-size:12.5px">每个节点二选一 · 选错触发坏结局</p>
       <button class="cta" id="startBtn">▶ 开始</button>
     </div>
 
@@ -117,19 +117,16 @@ const STORY = {
   },
   decisions: {
     d1: { t:"0:13", q:"卫兵来拖你走。你此刻怎么做？", replay:"seg1", options:[
-      { label:"低头，任卫兵把你带走", go:"seg2" },
-      { label:"扑过去抢回那袋金子",   bad:"end_blade" },
-      { label:"挣脱卫兵，冲进风雪逃跑", bad:"end_frozen_field" }
+      { label:"顺从", go:"seg2" },
+      { label:"逃跑", bad:"end_frozen_field" }
     ]},
     d2: { t:"0:40", q:"指尖悬在他胸口的蓝符文前。碰，还是不碰？", replay:"seg2", options:[
-      { label:"伸手，把指尖按上他胸口的蓝符文", go:"seg3" },
-      { label:"缩回手，转身朝冰门狂奔",         bad:"end_ice_wall" },
-      { label:"惊恐中抓扯、捶打冰封的他",       bad:"end_ice_dust" }
+      { label:"碰",   go:"seg3" },
+      { label:"不碰", bad:"end_ice_wall" }
     ]},
     d3: { t:"1:19", q:"救他＝毁自己。你怎么回应他的「今夜回到我身边」？", replay:"seg3", options:[
-      { label:"「今夜……我回来。」",            go:"seg4" },
-      { label:"「我不要为你死！」转身逃出冰宫", bad:"end_wither" },
-      { label:"「我来打碎它！」击碎他胸口符文", bad:"end_swap" }
+      { label:"答应", go:"seg4" },
+      { label:"拒绝", bad:"end_wither" }
     ]}
   },
   badEnds: {
@@ -203,11 +200,10 @@ function showDecision(dId){
   qbar.innerHTML = `<b>▶ ${d.t}</b> · ${d.q}`;
   const box = document.getElementById('choices');
   box.innerHTML = '';
-  const keys = ['A','B','C'];
-  d.options.forEach((opt,i)=>{
+  d.options.forEach((opt)=>{
     const b = document.createElement('button');
     b.className = 'btn';
-    b.innerHTML = `<span class="k">${keys[i]}</span>${opt.label}`;
+    b.textContent = opt.label;
     b.onclick = ()=>{
       if(opt.go) playSegment(opt.go);
       else showBad(opt.bad);
