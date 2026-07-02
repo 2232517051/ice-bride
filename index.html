@@ -123,10 +123,11 @@ const STORY = {
       { label:"Touch it",    go:"seg3" },
       { label:"Don't touch", bad:"end_ice_wall" }
     ]},
-    d3: { t:"1:21", q:"Saving him will unmake you. \"Come back to me tonight.\"", replay:"seg3",
-      // 决策延后：seg3 播完先无缝续播 seg4 的前 2 秒，定格在她回头望向王座的画面再出选项
-      // 想微调定格时刻，改 secs 即可（单位：秒，支持小数如 1.8 / 2.3）
-      delay:{ seg:"seg4", secs:2, hud:"原片 1:19–1:21 回望王座" }, options:[
+    d3: { t:"1:23", q:"Saving him will unmake you. \"Come back to me tonight.\"", replay:"seg3",
+      // 决策延后：seg3 播完先无缝续播 seg4 的前 4.2 秒，定格在她回头望向王座（王座+王子入画）的画面再出选项
+      // 逐帧校准：4.0s 王座还没入画，4.2s 起王座清晰可见，4.2–4.9s 都是回望王座的过肩构图，5.0s 她出画
+      // 想微调定格时刻，改 secs 即可（单位：秒，支持小数）
+      delay:{ seg:"seg4", secs:4.2, hud:"原片 1:19–1:23 回望王座" }, options:[
       { label:"Accept", go:"seg4" },
       { label:"Refuse", bad:"end_wither" }
     ]}
