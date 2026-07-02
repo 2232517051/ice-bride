@@ -123,7 +123,10 @@ const STORY = {
       { label:"Touch it",    go:"seg3" },
       { label:"Don't touch", bad:"end_ice_wall" }
     ]},
-    d3: { t:"1:19", q:"Saving him will unmake you. \"Come back to me tonight.\"", replay:"seg3", options:[
+    d3: { t:"1:21", q:"Saving him will unmake you. \"Come back to me tonight.\"", replay:"seg3",
+      // 决策延后：seg3 播完先无缝续播 seg4 的前 2 秒，定格在她回头望向王座的画面再出选项
+      // 想微调定格时刻，改 secs 即可（单位：秒，支持小数如 1.8 / 2.3）
+      delay:{ seg:"seg4", secs:2, hud:"原片 1:19–1:21 回望王座" }, options:[
       { label:"Accept", go:"seg4" },
       { label:"Refuse", bad:"end_wither" }
     ]}
@@ -160,23 +163,29 @@ function show(name){ hideAll(); document.getElementById(layers[name]).classList.
 let current = null;     // 当前 segment id
 let mode = 'segment';   // 'segment' | 'badvideo'
 let currentBad = null;  // 当前坏结局 id
+let pendingDecision = null; // 延后决策：{ dId, seg, at } —— 播到 seg 的第 at 秒时暂停并出选项
 
 function playSegment(segId){
   const seg = STORY.segments[segId];
   mode = 'segment';
   current = segId;
+  pendingDecision = null;
   hideAll(); qbar.style.display='none';
   hud.textContent = seg.hud;
   vid.src = seg.src;
   vid.currentTime = 0;
   const p = vid.play();
   if(p && p.catch) p.catch(()=>{ /* 被拦截则等用户点 */ });
+  // 本段结尾若是"延后决策"，提前预热下一段视频，衔接时不黑屏
+  const d = STORY.decisions[seg.decision];
+  if(d && d.delay) fetch(STORY.segments[d.delay.seg].src).catch(()=>{});
 }
 
 function playBadVideo(badId){
   const e = STORY.badEnds[badId];
   mode = 'badvideo';
   currentBad = badId;
+  pendingDecision = null;
   hideAll(); qbar.style.display='none';
   hud.textContent = '坏结局 · BAD END';
   vid.src = e.video;
@@ -190,8 +199,38 @@ vid.addEventListener('ended', ()=>{
   const seg = STORY.segments[current];
   if(!seg) return;
   if(seg.decision === 'end'){ show('end'); return; }
+  const d = STORY.decisions[seg.decision];
+  if(d.delay){ startDelayedDecision(seg.decision, d.delay); return; }
   showDecision(seg.decision);
 });
+
+// 延后决策：上一段播完后，无缝续播下一段的前 at 秒，定格画面后再出选项
+function startDelayedDecision(dId, delay){
+  const seg = STORY.segments[delay.seg];
+  mode = 'segment';
+  current = delay.seg;
+  hideAll(); qbar.style.display='none';
+  hud.textContent = delay.hud || seg.hud;
+  vid.src = seg.src;
+  vid.currentTime = 0;
+  pendingDecision = { dId, seg: delay.seg, at: delay.secs };
+  const p = vid.play();
+  if(p && p.catch) p.catch(()=>{});
+  requestAnimationFrame(watchDelay);
+}
+
+// 用 rAF 逐帧盯播放进度（比 timeupdate 精确），到点即定格出选项
+function watchDelay(){
+  if(!pendingDecision) return;
+  if(current === pendingDecision.seg && vid.currentTime >= pendingDecision.at){
+    const dId = pendingDecision.dId;
+    pendingDecision = null;
+    vid.pause();   // 定格在她回望王座的画面上
+    showDecision(dId);
+    return;
+  }
+  requestAnimationFrame(watchDelay);
+}
 
 function showDecision(dId){
   const d = STORY.decisions[dId];
@@ -202,8 +241,19 @@ function showDecision(dId){
     b.className = 'btn';
     b.textContent = opt.label;
     b.onclick = ()=>{
-      if(opt.go) playSegment(opt.go);
-      else showBad(opt.bad);
+      if(opt.go){
+        // 延后决策定格在 opt.go 段中途时，从定格处直接续播，不回跳重放
+        if(opt.go === current && vid.currentTime > 0 && !vid.ended){
+          hideAll(); qbar.style.display='none';
+          hud.textContent = STORY.segments[opt.go].hud;
+          const p = vid.play();
+          if(p && p.catch) p.catch(()=>{});
+        }else{
+          playSegment(opt.go);
+        }
+      }else{
+        showBad(opt.bad);
+      }
     };
     box.appendChild(b);
   });
