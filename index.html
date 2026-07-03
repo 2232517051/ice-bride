@@ -19,9 +19,6 @@
          padding:22px 18px 26px;gap:10px}
   .layer.show{display:flex}
 
-  .qbar{position:absolute;top:0;left:0;right:0;padding:16px 18px;
-        background:linear-gradient(180deg,rgba(3,8,15,.85),rgba(3,8,15,0));font-size:14px;color:#cfe9fb}
-  .qbar b{color:var(--gold)}
 
   .choices{display:flex;flex-direction:column;gap:12px;align-items:center}
   .btn{appearance:none;border:1px solid #2f5f80;background:rgba(16,40,62,.82);color:#eaf6ff;
@@ -67,9 +64,6 @@
     <video id="vid" playsinline preload="auto"></video>
     <div id="hud">原片片段</div>
 
-    <!-- 顶部决策问题 -->
-    <div class="qbar" id="qbar" style="display:none"></div>
-
     <!-- 开始屏 -->
     <div class="layer center show" id="startLayer">
       <h1>冰宫新娘</h1>
@@ -99,7 +93,6 @@
     <!-- 结束屏 -->
     <div class="layer center" id="endLayer">
       <h1 style="font-size:22px">🌹 真结局</h1>
-      <p style="color:#8af2b6">「What have I just done?」</p>
       <p>你接受了这份羁绊与代价 —— 留下来，救他。</p>
       <button class="cta" id="endBtn">⟲ 再玩一次</button>
     </div>
@@ -158,7 +151,6 @@ const STORY = {
 
 const vid   = document.getElementById('vid');
 const hud   = document.getElementById('hud');
-const qbar  = document.getElementById('qbar');
 const layers = { start:'startLayer', choice:'choiceLayer', bad:'badLayer', end:'endLayer' };
 function hideAll(){ Object.values(layers).forEach(id=>document.getElementById(id).classList.remove('show')); }
 function show(name){ hideAll(); document.getElementById(layers[name]).classList.add('show'); }
@@ -173,7 +165,7 @@ function playSegment(segId){
   mode = 'segment';
   current = segId;
   pendingDecision = null;
-  hideAll(); qbar.style.display='none';
+  hideAll();
   hud.textContent = seg.hud;
   vid.src = seg.src;
   vid.currentTime = 0;
@@ -192,7 +184,7 @@ function playBadVideo(badId){
   mode = 'badvideo';
   currentBad = badId;
   pendingDecision = null;
-  hideAll(); qbar.style.display='none';
+  hideAll();
   hud.textContent = '坏结局 · BAD END';
   vid.src = e.video;
   vid.currentTime = 0;
@@ -241,7 +233,7 @@ function showDecision(dId){
       if(opt.go){
         // 延后决策定格在 opt.go 段中途时，从定格处直接续播，不回跳重放
         if(opt.go === current && vid.currentTime > 0 && !vid.ended){
-          hideAll(); qbar.style.display='none';
+          hideAll();
           hud.textContent = STORY.segments[opt.go].hud;
           const p = vid.play();
           if(p && p.catch) p.catch(()=>{});
@@ -266,7 +258,6 @@ function showBad(badId){
 function showBadCard(badId){
   const e = STORY.badEnds[badId];
   const hasVideo = !!e.video;
-  qbar.style.display='none';
   document.getElementById('badTitle').textContent = e.title;
   // 有视频时，剧情已由画面交代，卡片只保留标题+重试；纯文字坏结局才展开 beats/dlg/note
   document.getElementById('badBeats').style.display = hasVideo ? 'none' : '';
