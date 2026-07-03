@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>冰宫新娘 · 互动短剧 Demo</title>
+<title>The Ice Bride · Interactive Demo</title>
 <style>
   :root{ --ice:#7fd4ff; --gold:#ffcf6b; --bad:#e85a6b; --bg:#070f18; }
   *{box-sizing:border-box}
@@ -62,14 +62,14 @@
 <div id="app">
   <div id="frame">
     <video id="vid" playsinline preload="auto"></video>
-    <div id="hud">原片片段</div>
+    <div id="hud">Footage</div>
 
     <!-- 开始屏 -->
     <div class="layer center show" id="startLayer">
-      <h1>冰宫新娘</h1>
-      <p>互动短剧 Demo · 你是被卖进冰宫的少女</p>
-      <p style="color:#6f93aa;font-size:12.5px">每个节点二选一 · 选错触发坏结局</p>
-      <button class="cta" id="startBtn">▶ 开始</button>
+      <h1>The Ice Bride</h1>
+      <p>Interactive Drama Demo · You are the girl sold to the Ice Palace</p>
+      <p style="color:#6f93aa;font-size:12.5px">Two choices at every node · The wrong one leads to a bad ending</p>
+      <button class="cta" id="startBtn">▶ Start</button>
     </div>
 
     <!-- 选项屏 -->
@@ -83,18 +83,18 @@
       <h2 id="badTitle"></h2>
       <div class="beats" id="badBeats"></div>
       <div id="badDlg"></div>
-      <div class="note" id="badNote">（此处为待生成片段 · 现以文字代替）</div>
+      <div class="note" id="badNote">(Clip not yet generated · shown as text)</div>
       <div class="row">
-        <button class="primary" id="badRetry">↻ 重开本节点</button>
-        <button id="badRestart">⟲ 从头开始</button>
+        <button class="primary" id="badRetry">↻ Retry this scene</button>
+        <button id="badRestart">⟲ Restart</button>
       </div>
     </div>
 
     <!-- 结束屏 -->
     <div class="layer center" id="endLayer">
-      <h1 style="font-size:22px">🌹 真结局</h1>
-      <p>你接受了这份羁绊与代价 —— 留下来，救他。</p>
-      <button class="cta" id="endBtn">⟲ 再玩一次</button>
+      <h1 style="font-size:22px">🌹 True Ending</h1>
+      <p>You accepted the bond and its price — you stayed, and you saved him.</p>
+      <button class="cta" id="endBtn">⟲ Play Again</button>
     </div>
   </div>
 </div>
@@ -102,12 +102,12 @@
 <script>
 const STORY = {
   segments: {
-    seg1: { src:"seg1_sold.mp4",   hud:"原片 0:00–0:13 卖身出发",         decision:"d1" },
-    seg2: { src:"seg2_palace.mp4",  hud:"原片 0:13–0:40 进冰宫",           decision:"d2" },
+    seg1: { src:"seg1_sold.mp4",   hud:"Footage 0:00–0:13 · Sold",         decision:"d1" },
+    seg2: { src:"seg2_palace.mp4",  hud:"Footage 0:13–0:40 · Into the Ice Palace", decision:"d2" },
     // seg3_full = 原 seg3+seg4 重编码合成的单文件（0:40–1:29），D3 在 43.1s 段内定格出选项，
     // Accept 后原地续播到片尾真结局 —— 全程不换 src，杜绝换源黑屏帧
     // （seg3_truth.mp4 / seg4_ending.mp4 保留在仓库，Reel Craft 端还引用，勿删）
-    seg3: { src:"seg3_full.mp4",   hud:"原片 0:40–1:29 苏醒·真相",        decision:"d3" }
+    seg3: { src:"seg3_full.mp4",   hud:"Footage 0:40–1:29 · Awakening & Truth", decision:"d3" }
   },
   decisions: {
     d1: { t:"0:13", q:"The guards are dragging you away. What do you do?", replay:"seg1", options:[
@@ -128,24 +128,24 @@ const STORY = {
     ]}
   },
   badEnds: {
-    end_blade:{ title:"💀 雪地里的一刀", replay:"seg1", video:"bad_blade.mp4",
-      beats:["你甩开卫兵，扑向王后去抢金袋","王后只后退半步，抬两指朝卫兵一勾","卫兵拔刀，一道刀光横扫","你倒进雪里；王后攥着金袋，头也不回地走远"],
-      dlg:[["你","You can't sell me! Give it back!"],["王后","Useless to the end."]] },
-    end_frozen_field:{ title:"💀 风雪吞了她", replay:"seg1", video:"bad_frozen_field.mp4",
-      beats:["你扯脱卫兵，转身冲进空旷雪原","暴风雪骤起，你那点锈红身影越跑越小，陷进深雪","你一头栽进深雪，往前刨，爬不动","白茫茫一片——卫兵靴子走近，雪面留下被拖拽的两道沟痕"],
-      dlg:[["你","I'd rather die out here!"],["王后","Let her freeze, then."]] },
-    end_ice_wall:{ title:"💀 封进冰墙", replay:"seg2", video:"bad_ice_wall.mp4",
-      beats:["你拒绝触碰，转身朝高耸的冰门狂奔","冰门轰然合拢，封成一整块实心蓝冰","寒霜如藤蔓从地面爬上你的脚踝、裙摆、脖颈","最后封住你睁大的双眼，泪在睫毛上冻成冰珠"],
-      dlg:[["你","Let me out! Please — let me out!"],["你","No... no, no—"]] },
-    end_ice_dust:{ title:"💀 碎成冰尘", replay:"seg2", video:"bad_ice_dust.mp4",
-      beats:["你惊恐中捶打、抓扯冰封的他","裂纹从胸口蓝符文裂开，蛛网般爬满全身冰层","他刚睁一丝眼缝、吐出半个字","整个身体从内崩解成闪光冰尘——王座空了"],
-      dlg:[["你","Get away from me!"],["王子","...wait—"]] },
-    end_wither:{ title:"💀 三百年，一瞬追上", replay:"seg3", video:"bad_wither.mp4",
-      beats:["你从冰座倒退着逃下湿亮的蓝冰台阶","台阶半途，一道惨白冷光打来，你脚步顿住","皮肤龟裂、棕发瞬间变灰白，飞速枯萎","俯拍：台阶上只剩一摊灰烬和皱成一团的锈红长裙"],
-      dlg:[["你","No— I won't die for you!"],["老臣（画外）","You touched him. It's already taking you."]] },
-    end_swap:{ title:"💀 互换的冰雕", replay:"seg3", video:"bad_swap.mp4",
-      beats:["你抓起冰晶碎片，砸向他胸口的蓝符文","青蓝光炸开，包裹他半身的冰层崩裂剥落","王子起身，着完整深色王袍，平静走下台阶离开","镜头摇回王座：你已代替他冻成新冰雕，胸口亮起同款蓝符文"],
-      dlg:[["你","I'll break this—!"],["王子","You shouldn't have done that."]] }
+    end_blade:{ title:"💀 A Blade in the Snow", replay:"seg1", video:"bad_blade.mp4",
+      beats:["You wrench free of the guards and lunge at the Queen for the gold pouch","She steps back half a pace and beckons the guards with two fingers","A drawn blade flashes once","You fall into the snow; the Queen walks away with the pouch, never looking back"],
+      dlg:[["You","You can't sell me! Give it back!"],["Queen","Useless to the end."]] },
+    end_frozen_field:{ title:"💀 The Blizzard Took Her", replay:"seg1", video:"bad_frozen_field.mp4",
+      beats:["You tear loose and run into the open snowfield","A blizzard rises; your rust-red figure shrinks into the deep snow","You pitch forward, clawing ahead, unable to crawl","Whiteout — boots approach, and two drag marks are left across the snow"],
+      dlg:[["You","I'd rather die out here!"],["Queen","Let her freeze, then."]] },
+    end_ice_wall:{ title:"💀 Sealed in the Ice Wall", replay:"seg2", video:"bad_ice_wall.mp4",
+      beats:["You refuse to touch it and bolt for the towering ice gates","The gates slam shut into one solid slab of blue ice","Frost climbs like vines up your ankles, your skirt, your neck","It seals over your wide-open eyes; tears freeze to beads on your lashes"],
+      dlg:[["You","Let me out! Please — let me out!"],["You","No... no, no—"]] },
+    end_ice_dust:{ title:"💀 Shattered to Ice Dust", replay:"seg2", video:"bad_ice_dust.mp4",
+      beats:["In panic you pound and claw at his frozen body","Cracks spread from the blue rune on his chest, webbing across the ice","His eyes barely open; he gets out half a word","His whole body collapses into glittering ice dust — the throne stands empty"],
+      dlg:[["You","Get away from me!"],["Prince","...wait—"]] },
+    end_wither:{ title:"💀 Three Hundred Years, All at Once", replay:"seg3", video:"bad_wither.mp4",
+      beats:["You back away down the wet blue steps of the dais","Halfway down, a pale cold light strikes you still","Your skin cracks, your brown hair turns grey, you wither in seconds","From above: only ashes and a crumpled rust-red dress remain on the steps"],
+      dlg:[["You","No— I won't die for you!"],["Elder (V.O.)","You touched him. It's already taking you."]] },
+    end_swap:{ title:"💀 Traded Places", replay:"seg3", video:"bad_swap.mp4",
+      beats:["You grab a shard of ice and strike the blue rune on his chest","Blue light bursts; the ice sheathing him cracks and falls away","The prince rises in dark royal robes and calmly walks down the steps","The camera pans back to the throne: you sit frozen in his place, the same rune glowing on your chest"],
+      dlg:[["You","I'll break this—!"],["Prince","You shouldn't have done that."]] }
   }
 };
 
@@ -185,7 +185,7 @@ function playBadVideo(badId){
   currentBad = badId;
   pendingDecision = null;
   hideAll();
-  hud.textContent = '坏结局 · BAD END';
+  hud.textContent = 'BAD END';
   vid.src = e.video;
   vid.currentTime = 0;
   const p = vid.play();
@@ -264,7 +264,7 @@ function showBadCard(badId){
   document.getElementById('badDlg').style.display   = hasVideo ? 'none' : '';
   document.getElementById('badNote').style.display  = hasVideo ? 'none' : '';
   document.getElementById('badBeats').innerHTML = e.beats.map(t=>`<div>· ${t}</div>`).join('');
-  document.getElementById('badDlg').innerHTML = e.dlg.map(([sp,l])=>`<div class="dlg"><span class="sp">${sp}：</span>${l}</div>`).join('');
+  document.getElementById('badDlg').innerHTML = e.dlg.map(([sp,l])=>`<div class="dlg"><span class="sp">${sp}:</span>${l}</div>`).join('');
   document.getElementById('badRetry').onclick   = ()=>playSegment(e.replay);
   document.getElementById('badRestart').onclick = ()=>playSegment('seg1');
   try{ vid.pause(); }catch(_){}
